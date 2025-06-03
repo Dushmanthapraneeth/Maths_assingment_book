@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-language Quiz Home</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      width: 100%;
+      max-width: 500px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      margin: auto;
+    }
+    .active {
+      display: flex !important;
+    }
+    select, input, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 15px;
+      border-radius: 10px;
+      border: 1px solid #bbb;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+    button {
+      background-color: #3b82f6;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+    button:hover {
+      background-color: #2563eb;
+    }
+    .lesson-button {
+      margin: 6px 0;
+      padding: 12px;
+      background-color: #dbeafe;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 15px;
+      width: 100%;
+    }
+    .lesson-button:hover {
+      background-color: #bfdbfe;
+    }
+    iframe {
+      width: 100vw;
+      height: 100vh;
+      border: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 999;
+    }
+    .back-btn {
+      margin-top: 15px;
+      background-color: #f87171;
+    }
+    .top-left-back {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+      background-color: #f87171;
+      padding: 10px 20px;
+      border-radius: 8px;
+      color: white;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .warning {
+      color: red;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body style="background: linear-gradient(to bottom right, #dbeafe, #f0f9ff); display:flex; align-items:center; justify-content:center; height:100vh;">
+
+  <div class="container active" id="languageSelect">
+    <h2>Select Language</h2>
+    <select onchange="selectLanguage(this.value)">
+      <option value="">-- Choose Language --</option>
+      <option value="si">සිංහල</option>
+      <option value="ta">தமிழ்</option>
+      <option value="en">English</option>
+    </select>
+  </div>
+
+  <div class="container" id="accountCreate">
+    <h2>Create Account</h2>
+    <input type="text" placeholder="Enter your name" id="username">
+    <div class="warning" id="nameWarning" style="display:none">Please enter your name.</div>
+    <button onclick="goToClassSelection()">Next</button>
+    <button class="back-btn" onclick="goBack('languageSelect')">Back</button>
+  </div>
+
+  <div class="container" id="classSelect">
+    <h2>Select Grade</h2>
+    <select id="gradeSelect" onchange="showTermTabs()">
+      <option value="">-- Select Grade --</option>
+      <option value="6">Grade 6</option>
+      <option value="7">Grade 7</option>
+      <option value="8">Grade 8</option>
+      <option value="9">Grade 9</option>
+      <option value="10">Grade 10</option>
+      <option value="11">Grade 11</option>
+    </select>
+    <button class="back-btn" onclick="goBack('accountCreate')">Back</button>
+  </div>
+
+  <div class="container" id="lessonList">
+    <h2>Select Term</h2>
+    <div id="termTabs" style="width:100%;"></div>
+    <div id="lessons" style="width:100%; margin-top:10px;"></div>
+    <button class="back-btn" onclick="goBack('classSelect')">Back</button>
+  </div>
+
+  <button id="quizBackBtn" class="top-left-back" style="display:none" onclick="closeQuiz()">Back</button>
+  <iframe id="quizFrame" style="display:none"></iframe>
+
+  <script>
+    const lessonsByGrade = {
+      6: {
+        'Term 1': [
+          { title: 'Lesson 1.1', file: 'C:\Users\dushm\Downloads\New folder (2)\quiz_game (1)\Sinhala\Grade 6\1st_term\lesson_nu_01\index.html' },
+          { title: 'Lesson 1.2', file: '' }
+        ],
+        'Term 2': [
+          { title: 'Lesson 2.1', file: '' },
+          { title: 'Lesson 2.2', file: '' }
+        ],
+        'Term 3': [
+          { title: 'Lesson 3.1', file: '' }
+        ]
+      },
+      7: {
+        'Term 1': [
+          { title: 'Lesson 1.1', file: '' },
+          { title: 'Lesson 1.2', file: '' }
+        ],
+        'Term 2': [
+          { title: 'Lesson 2.1', file: '' },
+          { title: 'Lesson 2.2', file: '' }
+        ],
+        'Term 3': [
+          { title: 'Lesson 3.1', file: '' }
+        ]
+      },
+    };
+
+    function switchScreen(hideId, showId) {
+      document.getElementById(hideId).classList.remove('active');
+      document.getElementById(showId).classList.add('active');
+    }
+
+    function goBack(to) {
+      const all = ['languageSelect','accountCreate','classSelect','lessonList'];
+      all.forEach(id => document.getElementById(id).classList.remove('active'));
+      document.getElementById(to).classList.add('active');
+    }
+
+    function selectLanguage(lang) {
+      sessionStorage.setItem('lang', lang);
+      switchScreen('languageSelect', 'accountCreate');
+    }
+
+    function goToClassSelection() {
+      const nameInput = document.getElementById('username').value.trim();
+      const warning = document.getElementById('nameWarning');
+      if (!nameInput) {
+        warning.style.display = 'block';
+        return;
+      } else {
+        warning.style.display = 'none';
+      }
+      switchScreen('accountCreate', 'classSelect');
+    }
+
+    function showTermTabs() {
+      const grade = parseInt(document.getElementById('gradeSelect').value);
+      const termTabs = document.getElementById('termTabs');
+      const lessonsContainer = document.getElementById('lessons');
+      termTabs.innerHTML = '';
+      lessonsContainer.innerHTML = '';
+      if (!grade || !lessonsByGrade[grade]) return;
+
+      const terms = lessonsByGrade[grade];
+      for (let term in terms) {
+        const btn = document.createElement('button');
+        btn.className = 'lesson-button';
+        btn.textContent = term;
+        btn.onclick = () => showLessonsNewWindow(grade, term);
+        termTabs.appendChild(btn);
+      }
+
+      switchScreen('classSelect', 'lessonList');
+    }
+
+    function showLessonsNewWindow(grade, term) {
+      const lessons = lessonsByGrade[parseInt(grade)][term];
+      const win = window.open('', '_blank');
+      const html = `<!DOCTYPE html><html><head><title>Lessons - ${term}</title><style>
+        body { font-family: sans-serif; padding: 20px; }
+        .lesson-button { margin: 6px 0; padding: 12px; background-color: #dbeafe; border: none; border-radius: 10px; cursor: pointer; font-size: 15px; width: 100%; }
+        .lesson-button:hover { background-color: #bfdbfe; }
+        .top-left-back { position: fixed; top: 10px; left: 10px; z-index: 1000; background-color: #f87171; padding: 10px 20px; border-radius: 8px; color: white; border: none; font-weight: bold; cursor: pointer; }
+      </style></head><body>` +
+        `<button class='top-left-back' onclick='window.close()'>Back</button>` +
+        `<h2>${term} Lessons</h2>` +
+        lessons.map(l => `<button class='lesson-button' onclick="window.location='${l.file}'">${l.title}</button>`).join('') +
+        '</body></html>';
+      win.document.write(html);
+    }
+
+    function loadQuiz(file) {
+      document.querySelectorAll('.container').forEach(el => el.style.display = 'none');
+      const frame = document.getElementById('quizFrame');
+      frame.src = file;
+      frame.style.display = 'block';
+      document.getElementById('quizBackBtn').style.display = 'block';
+    }
+
+    function closeQuiz() {
+      const frame = document.getElementById('quizFrame');
+      frame.style.display = 'none';
+      frame.src = '';
+      document.getElementById('quizBackBtn').style.display = 'none';
+      goBack('lessonList');
+    }
+  </script>
+</body>
+</html>
